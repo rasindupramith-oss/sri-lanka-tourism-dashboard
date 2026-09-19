@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# 1. Page Configuration (Title, Icon, Wide Layout)
+# 1. Page Configuration
 st.set_page_config(
     page_title="Sri Lanka Tourism Analytics | 2022 - 2026",
     page_icon="🇱🇰",
@@ -48,7 +48,10 @@ filtered_df = df[(df['Year'].isin(selected_years)) & (df['Country'].isin(selecte
 # 5. Top-Level KPI Metric Cards
 total_arrivals = filtered_df.groupby('Date')['Total_Monthly_Arrivals'].first().sum()
 total_revenue = filtered_df.groupby('Date')['Est_Revenue_MUSD'].first().sum()
-top_country = filtered_df.groupby('Country')['Arrivals'].sum().idxmax() if not filtered_df.empty else "N/A"
+
+# Identify top sovereign country (excluding generic 'Other Countries')
+individual_countries = filtered_df[filtered_df['Country'] != 'Other Countries']
+top_country = individual_countries.groupby('Country')['Arrivals'].sum().idxmax() if not individual_countries.empty else "N/A"
 
 col1, col2, col3 = st.columns(3)
 col1.metric("Total Tourist Arrivals", f"{total_arrivals:,.0f}")
@@ -97,12 +100,13 @@ with chart_col2:
         season_summary,
         x='Month',
         y='Arrivals',
-        labels={'Arrivals': 'Avg Arrivals'},
+        labels={'Arrivals': 'Avg Arrivals', 'Month': 'Month of the Year'},
         template='plotly_white',
         color='Arrivals',
         color_continuous_scale='Blues'
     )
-    fig_season.tick_params = dict(axis='x', rotation=45)
+    # Correct Plotly syntax for rotating x-axis labels
+    fig_season.update_xaxes(tickangle=-45)
     st.plotly_chart(fig_season, use_container_width=True)
 
 # 8. Story Narrative Section
@@ -110,6 +114,6 @@ st.divider()
 st.subheader("💡 The Story Behind the Numbers")
 st.markdown("""
 * **The 'V-Shaped' Rebound:** After bottoming out in mid-2022 during the foreign exchange and fuel crisis, tourist arrivals exhibited strong exponential recovery, breaking historical highs by late 2025.
-* **Key Growth Engines:** **India** and **Russia** represent the largest source markets, together contributing over 35% of all inbound tourists.
+* **Key Growth Engines:** **India** and **Russia** represent the largest individual source markets, together contributing over 35% of all inbound tourists.
 * **Seasonal Surges:** Sri Lanka experiences its primary tourism peak between **December and March** (winter escape from Europe and East Asia), with a secondary summer peak in **July and August** (Esala Perahera festival season).
 """)
